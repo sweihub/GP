@@ -4,12 +4,19 @@
 <title>Genetic Programming C++ Class Library</title>
 </head>
 
-<BODY BACKGROUND="backgnd.jpg">
+<BODY>
 
 <font size=+1><b>GPC++ - Genetic Programming C++ Class Library</b></font> 
 <p>
+<dd>
 
-<dd> The GP kernel is a C++ class library that can be used to apply
+<I>Note:</I> The original project is here:
+<a target="_blank" href='http://www0.cs.ucl.ac.uk/staff/ucacbbl/ftp/weinbenner/gp.html'>
+http://www0.cs.ucl.ac.uk/staff/ucacbbl/ftp/weinbenner/gp.html</a>, very good C++ GP libary written at 1997, I just fix the compile errors.
+Have fun with genetic programming. <BR/> -- Sunding Wei, 2017.3.1 <P>
+<HR/>
+
+The GP kernel is a C++ class library that can be used to apply
 genetic programming techniques to all kinds of problems.  An integral
 component is the ability to produce automatically defined functions as
 found in Koza's "Genetic Programming II". Technical documentation
@@ -112,12 +119,6 @@ Source Code Collection
 needed (for the operation systems written by Microsoft, ugh...).  I
 did it!  The documentation is now available in HTML format.
 <p>
-
-<HR>
-
-<A HREF="welcome.html"> <IMG
-SRC="http://www.th-darmstadt.de/images/go_prev_btn.gif" BORDER=0>
-Back to home page </A>
 
 </body>
 </html>
