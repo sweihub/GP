@@ -1,0 +1,21 @@
+************************************************************************
+*               gpc++ - The Genetic Programming Kernel                 *
+*                         C++ Class Library                            *
+************************************************************************
+
+Some things are still to do
+===========================
+
+The assignment-operator for all kernel classes is not yet implemented.
+
+When creating new trees in generate(), they are not checked whether
+they are valid using function checkForValidCreation().
+
+Documentation of the examples
+
+The configuration module does not satisfy me.  I would prefer a C++
+module that can read ".ini" file in the Windows style (even though I
+don't like windows).  Furthermore, the kernel should be able to read
+the parameter it needs from such a configuration object.  This way it
+is easier to extend the parameter class GPVariables without the need
+for the user to change his/her code.

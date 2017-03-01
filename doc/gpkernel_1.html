@@ -1,0 +1,2510 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.51
+     from gpkernel.texi on 3 July 1997 -->
+
+<TITLE>Genetic Programming Kernel Version 0.5.2 - 1  The Genetic Programming Kernel</TITLE>
+</HEAD>
+<BODY>
+Go to the first, previous, <A HREF="gpkernel_2.html">next</A>, <A HREF="gpkernel_3.html">last</A> section, <A HREF="gpkernel_toc.html">table of contents</A>.
+<P><HR><P>
+
+<P>
+Copyright (C) 1997 Thomas Weinbrenner (thomasw@emk.e-technik.th-darmstadt.de)
+Copyright Licence: GNU General Public Licence
+
+</P>
+
+
+
+<H1><A NAME="SEC1" HREF="gpkernel_toc.html#TOC1">1  The Genetic Programming Kernel</A></H1>
+
+<P>
+<A NAME="IDX1"></A>
+
+</P>
+<P>
+This section documents the Genetic Programming kernel.  It is written in
+C++ and based upon version 0.4 of gpc++ by Adam Fraser.  The GP kernel
+is a C++ class library that can be used to apply genetic programming
+techniques to all kinds of problems.  An integral component is the
+ability to produce automatically defined functions as found in Koza's
+"Genetic Programming II".  It has been extensively modified and is now a
+safe and widely usable tool for a wide range of problems that make use
+of the Genetic Programming technique.
+
+</P>
+<P>
+The software package comes as a library and defines several classes
+with a certain hierarchy.  The software makes use of the object
+oriented programming scheme, therefore it need not be modified to
+adapt the system to a specific problem.  This is done by inheriting
+classes and providing the appropriate virtual functions.  These are
+the features:
+
+</P>
+
+<UL>
+<LI>Automatically defined functions (ADFs).
+
+<LI>Tournament and fitness proportionate selection.
+
+<LI>Demetic grouping, independent of the selection type.
+
+<LI>Optional steady state Genetic Programming kernel (like the Adam
+
+  Fraser code).
+<LI>Subtree crossover.
+
+<LI>Swap and shrink mutation.
+
+<LI>Multiple populations possible.
+
+<LI>System parameters can be changed without recompilation.
+
+<LI>Improved random number generator.  Population sizes of over
+
+  250000 are possible now.
+<LI>Loading and saving of a population.
+
+</UL>
+
+<P>
+To understand how the library works, it is important for the user to
+read Section section <A HREF="gpkernel_1.html#SEC3">1.2  The Class Hierarchy</A> and section <A HREF="gpkernel_1.html#SEC4">1.3  Underlying Class definitions</A>.  The first deals with the hierarchy of all defined
+classes, and the second with the two important base classes
+<EM>GPObject</EM> and <EM>GPContainer</EM>.
+
+</P>
+
+
+
+<H2><A NAME="SEC2" HREF="gpkernel_toc.html#TOC2">1.1  License</A></H2>
+
+<A HREF="http://www.emk.e-technik.th-darmstadt.de/~thomasw"> 
+(C) Thomas Weinbrenner </A> <P>
+
+<P>
+This library is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 1, or (at your option) any
+later version.
+
+</P>
+<P>
+This library is distributed in the hope that it will be useful, but
+<STRONG>without any warranty</STRONG>; without even the implied warranty of
+<STRONG>merchantability or fitness for a particular purpose</STRONG>.  See the
+GNU General Public License for more details.
+
+</P>
+<P>
+You should have received a copy of the GNU General Public License along
+with this software; if not, write to the Free Software Foundation, Inc.,
+675 Mass Ave, Cambridge, MA 02139, USA.
+
+</P>
+
+
+
+<H2><A NAME="SEC3" HREF="gpkernel_toc.html#TOC3">1.2  The Class Hierarchy</A></H2>
+
+<P>
+The class hierarchy used for the Genetic Programming system is based
+upon the abstract class <EM>GPObject</EM>.  All classes inherit directly
+or indirectly from this class.  A very important class is
+<EM>GPContainer</EM> as it implements a container that is used for nearly
+all other classes.  The classes <EM>GPNode</EM>, <EM>GPNodeSet</EM> and
+<EM>GPAdfNodeSet</EM> are used to describe the functions and terminals for
+the population.  The classes <EM>GPGene</EM>, <EM>GP</EM> and
+<EM>GPPopulation</EM> implement the genetic tree structure, the
+description of a genetic program and of a whole population.  The class
+<EM>GPVariables</EM> is separate; it is used to hold important
+configuration variables for the population.
+
+</P>
+<P>
+The figure illustrates inheritance hierarchy and shows the type of
+object the classes contain.  For example: <EM>GPNode</EM>,
+<EM>GPContainer</EM> and <EM>GPVariables</EM> inherit from class
+<EM>GPObject</EM>, all other classes inherit from <EM>GPContainer</EM>.  A
+population contains genetic programs, a genetic program contains one or
+more genetic trees (the main tree and the ADFs) represented by the root
+gene, and a gene contains its children, if any.
+
+</P>
+<IMG SRC="images/hierarchy.gif" ALT="Class hierarchy"
+ALIGN="CENTER"> <BR> Figure: Class hierarchy </A>
+<P>
+
+<P>
+The classes <EM>GPNode</EM>, <EM>GPNodeSet</EM> and <EM>GPAdfNodeSet</EM>
+describe a single node, e.g. a function or terminal, a set of nodes that
+is used to collect all nodes used for a genetic tree (for example the
+main genetic program or any ADF), and a set of node sets for each
+genetic tree respectively.  The user creates one object of type
+<EM>GPAdfNodeSet</EM> and puts all the necessary node sets in it before he
+creates the initial population.  This object should not be altered
+during the evolution process.  This is not really a restriction.  If the
+user alters the object, he must make sure that those nodes (functions
+and terminals) still needed by the population object are not deleted.
+
+</P>
+
+
+
+<H2><A NAME="SEC4" HREF="gpkernel_toc.html#TOC4">1.3  Underlying Class definitions</A></H2>
+
+
+
+<H3><A NAME="SEC5" HREF="gpkernel_toc.html#TOC5">1.3.1  The Base Class GPObject</A></H3>
+
+<P>
+<A NAME="IDX2"></A>
+<A NAME="IDX3"></A>
+
+</P>
+<P>
+The base class for all classes is <EM>GPObject</EM>.  It is an abstract
+class, e.g. an object of type <EM>GPObject</EM> cannot be created.  
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+class GPObject
+{
+public:
+  GPObject () {}
+  virtual ~GPObject () {}
+  ...
+};
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+<A NAME="IDX4"></A>
+<A NAME="IDX5"></A>
+
+</P>
+<P>
+The container class <EM>GPContainer</EM> holds objects of type
+<EM>GPObject</EM> or of an inherited class.  The class "owns" other
+objects and is responsible for deleting them if the container itself is
+deleted.  Therefore, the destructor defined in <EM>GPObject</EM> is
+virtual.  This enables the container to call the correct destructor
+function on deleting any object in the container.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  GPObject (const GPObject&#38;) {}
+  virtual GPObject&#38; duplicate ()=0;
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+<A NAME="IDX6"></A>
+
+</P>
+<P>
+If a container must make a copy of itself (for example if the copy
+constructor of class <EM>GPContainer</EM> is invoked), the container needs
+to copy all members that are in the container.  This again is achieved
+by a virtual function called <EM>duplicate()</EM>.  Every class inheriting
+from <EM>GPObject</EM> has to define this function.  Usually the function
+code simply calls the copy constructor of the own class.
+
+</P>
+<P>
+<A NAME="IDX7"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual void printOn (ostream&#38; os)=0;
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+Each object should be able to print itself on a stream.  This is done by
+the virtual function <EM>printOn()</EM>.  By doing this, the output
+operator <CODE>&#60;&#60;</CODE> is defined only once for all objects inheriting in
+any way from <EM>GPObject</EM>.
+
+</P>
+
+
+
+<H3><A NAME="SEC6" HREF="gpkernel_toc.html#TOC6">1.3.2  The Container Class GPContainer</A></H3>
+
+<P>
+<A NAME="IDX8"></A>
+<A NAME="IDX9"></A>
+
+</P>
+<P>
+The container class <EM>GPContainer</EM> holds objects of type
+<EM>GPObject</EM> or of an inherited class.  It is a very simple
+implementation of a set.  The class is supposed to provide for handling
+of other objects and is needed as base class by nearly all other classes
+as they are almost all containers.  Each container manages the objects
+it owns by allocating an array of pointers that point to these objects.
+This array is of fixed length which turned out to be quite sufficient.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+class GPContainer : public GPObject
+{
+public:
+  GPContainer ();
+  GPContainer (int numObjects);
+  virtual ~GPContainer ();
+  ...
+};
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The constructor without parameters sets the object's variables to a
+default value.  The constructor with the number of objects that are to
+fit in the container as a parameter allocates the array of pointers and
+sets each pointer to NULL.  The destructor deletes all objects the
+container owns and then the array of pointers.
+
+</P>
+<P>
+<A NAME="IDX10"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  GPContainer (const GPContainer&#38; gpc);
+  virtual GPObject&#38; duplicate () { 
+    return *(new GPContainer(*this)); }
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The copy constructor makes a copy of another container.  First it
+allocates the array of pointers, if there are any, and then all objects
+in the original container are duplicated by means of the virtual
+function <EM>duplicate()</EM> declared in class <EM>GPObject</EM>.  This is
+the reason why every class has to implement the function
+<EM>duplicate()</EM>, because the container must be able to make a copy of
+each object.  Usually, the function <EM>duplicate()</EM> makes a copy (in
+this case, of a complete container) by allocating a new object with the
+copy constructor.
+
+</P>
+<P>
+Note: the copy constructors of inheriting classes have not only to copy
+the elements of the own class, but also have to call the copy
+constructor of the container class.  The copy constructor of class X
+inheriting from <EM>GPContainer</EM> should look like this:
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  X (const X&#38; x) : GPContainer(x) { ... }
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+This ensures that the copy constructor of class <EM>GPContainer</EM> is
+invoked which is necessary to copy all the container objects of an
+instantiated class X object.
+
+</P>
+<P>
+<A NAME="IDX11"></A>
+<A NAME="IDX12"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  void reserveSpace (int numObjects);
+  int containerSize() const { return contSize; }
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+If a <EM>GPContainer</EM> object was created with the parameterless
+constructor, there must be a way to set up the actual container size and
+allocate the array of pointers.  The function <EM>reserveSpace()</EM> can
+be called in this case.  It should not be called to resize the container
+which is in any case not possible.
+
+</P>
+<P>
+The container size is returned by the function <EM>containerSize()</EM>.
+This function is very important and widely used.  Nearly every class of
+the Genetic Programming system is inherited from <EM>GPContainer</EM>.
+The class that represents the tree structure (<EM>GPGene</EM>), for
+example, uses <EM>containerSize()</EM> to determine the number of
+children.
+
+</P>
+<P>
+<A NAME="IDX13"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  GPObject* Nth (int n) const;
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+There are a few functions that serve as means of modifying the
+container's content or obtaining information.  All functions that exist
+within the container class check for the range of any arguments and stop
+the program if this is out of range.  One of the benefits of object
+oriented programming is that it can save a lot of code.  Classes that
+inherit from <EM>GPContainer</EM> do not need to check for this kind of
+error.
+
+</P>
+<P>
+<EM>Nth()</EM> returns the n-th object in the container.  The classes that
+inherit from <EM>GPContainer</EM> also need a function that returns
+elements from the container, but they certainly want the function to
+return a type of the inherited class and not <EM>GPObject</EM>.  Some
+compilers do not allow for virtual functions returning different types
+yet.  Therefore, different function names are used in the inheriting
+classes.  Those functions invoke <EM>GPContainer::Nth()</EM> and do the
+necessary type conversion.
+
+</P>
+<P>
+<A NAME="IDX14"></A>
+<A NAME="IDX15"></A>
+<A NAME="IDX16"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  void put (int n, GPObject&#38; gpo);
+  GPObject&#38; get (int n);
+  GPObject** getPointerAddress (int n) const;
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The functions <EM>put()</EM> and <EM>get()</EM> change the responsibility
+for an object's destruction.  If the container owns an object, it will
+destroy it whenever the container is destroyed.  The figure explains
+what happens when a container is created, space is reserved, and any
+object is put into the container.
+
+</P>
+<IMG SRC="images/gpcontainer.gif" 
+ALT="Picture of object being placed into the container."
+ALIGN="CENTER"> <BR> 
+<P>
+Figure: A <EM>GPContainer</EM> object (<EM>a</EM>) after creation with the
+parameterless constructor, (<EM>b</EM>) after calling
+<EM>reserveSpace(2)</EM>, and (<EM>c</EM>) after putting another object into
+the container at position 1
+</A>
+
+</P>
+<P>
+<A NAME="IDX17"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual void printOn (ostream&#38; os);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+<EM>getPointerAdress()</EM> returns a pointer to the pointer within the
+array of pointers.  This way it is possible to modify, for example, the
+structure of a genetic tree by merely changing the pointers.  The
+function makes crossover as well as shrink mutation very fast and easy.
+However, care has to be taken not to leave objects undeleted (the
+so-called memory leaks) nor to disrupt internal structures.
+
+</P>
+<P>
+A container also provides a simple print function: it calls the
+<EM>printOn()</EM> function of every object it contains.  This function is
+usually overwritten by the inheriting classes.
+
+</P>
+
+
+
+<H2><A NAME="SEC7" HREF="gpkernel_toc.html#TOC7">1.4  Functions and Terminals</A></H2>
+
+<P>
+<A NAME="IDX18"></A>
+<A NAME="IDX19"></A>
+<A NAME="IDX20"></A>
+
+</P>
+<P>
+A genetic program consists of a tree structure.  Each node within the
+tree has certain properties.  It can be either a function, which has
+parameters, or a terminal.  By definition the difference between a
+function and terminal is that a terminal has no arguments.  One could
+also say a terminal is a function with no arguments.  Indeed they are so
+similar that a distinction that leads to different classes is not
+necessary.  Both types are referred to as nodes throughout the report.
+
+</P>
+<P>
+The class <EM>GPNode</EM> is used to describe the properties of a node.
+The class is not used to represent the tree structure of a genetic
+program (See section <A HREF="gpkernel_1.html#SEC14">1.7  The Gene</A>, class <EM>GPGene</EM>).  The classes
+<EM>GPNode</EM>, <EM>GPNodeSet</EM> and <EM>GPAdfNodeSet</EM> are only used to
+describe the properties of the functions and terminals for later
+populations.
+
+</P>
+
+
+
+<H3><A NAME="SEC8" HREF="gpkernel_toc.html#TOC8">1.4.1  Class GPNode</A></H3>
+
+<P>
+<A NAME="IDX21"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+class GPNode : public GPObject
+{
+public:
+  GPNode (int nVal, char* str, int args=0) : nodeValue(nVal), 
+      numOfArgs(args) { representation=copyString (str); }
+  virtual ~GPNode () { delete [] representation; }
+  ...
+};
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+<A NAME="IDX22"></A>
+
+</P>
+<P>
+The constructor defines a node and receives an identification parameter
+of type integer and a string which is used for output.  The class makes
+a copy of this string.  To define a function, a third parameter, namely
+the number of arguments the function has, is given to the constructor.
+The identification value must be unique for a node set (See section <A HREF="gpkernel_1.html#SEC9">1.4.2  Sets of Nodes</A>).
+
+</P>
+<P>
+<A NAME="IDX23"></A>
+<A NAME="IDX24"></A>
+<A NAME="IDX25"></A>
+<A NAME="IDX26"></A>
+<A NAME="IDX27"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  int value () { return nodeValue; }
+  int isFunction () { return numOfArgs!=0; }
+  int isTerminal () { return numOfArgs==0; }
+  int arguments () { return numOfArgs; }
+  virtual void printOn (ostream&#38; os) { os &#60;&#60; representation; }
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+These functions are self-explanatory and return information about the
+node.  The function <EM>printOn()</EM> prints the representation string.
+
+</P>
+<P>
+<A NAME="IDX28"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+protected:
+  char copyString (char *str);
+  int nodeValue;
+  int numOfArgs;
+  char* representation;
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+These components are protected and not accessible from outside the class
+scope.  <EM>copyString()</EM> allocates memory with the <EM>new</EM>
+operator and makes a copy of the given string.
+
+</P>
+
+
+
+<H3><A NAME="SEC9" HREF="gpkernel_toc.html#TOC9">1.4.2  Sets of Nodes</A></H3>
+
+<P>
+<A NAME="IDX29"></A>
+<A NAME="IDX30"></A>
+
+</P>
+<P>
+Each genetic tree has its own function and terminal set.  For this
+purpose, the class <EM>GPNodeSet</EM> is introduced and serves as a
+container to hold all the different nodes.
+
+</P>
+<P>
+<A NAME="IDX31"></A>
+<A NAME="IDX32"></A>
+
+</P>
+<P>
+During the creation process of the population, the class has to choose a
+node either from the terminals or the functions.  To increase
+efficiency, the class puts functions at the beginning and terminals at
+the end of the container.  Therefore, the function <EM>put()</EM> must not
+be used to manually put nodes in the container, the function
+<EM>putNode()</EM> should be used.  This also increases ease of use.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+class GPNodeSet : public GPContainer
+{
+public:
+  GPNodeSet (int numOfNodes) : GPContainer (numOfNodes) {
+    numFunctions=0; numTerminals=0; }
+  ...
+};
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+<A NAME="IDX33"></A>
+
+</P>
+<P>
+During the process of placing nodes in the container, two variables are
+used which are initialised by the constructors.  These count the number
+of functions and terminals that are put in the container.
+
+</P>
+<P>
+<A NAME="IDX34"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual void put (int, GPObject&#38;);
+  virtual void putNode (GPNode&#38; gpo);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+As mentioned above, the function <EM>putNode()</EM> puts functions at the
+beginning and terminals at the end of the container.  If the user tries
+to call the function <EM>put()</EM>, the whole process gets mixed up.  The
+function <EM>put()</EM> is defined in the class and exits with an error
+message if it is called.  The identification values of the nodes must be
+distinguishable for a node set (See section <A HREF="gpkernel_1.html#SEC8">1.4.1  Class GPNode</A>).  This is checked
+by the function <EM>putNode()</EM>.
+
+</P>
+<P>
+<A NAME="IDX35"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual void printOn (ostream&#38; os);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+<EM>printOn()</EM> prints out the complete node set.  For each node, it
+prints out the node, and if the node is a function, parenthesis around
+the number of arguments of the function.
+
+</P>
+<P>
+<A NAME="IDX36"></A>
+<A NAME="IDX37"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual GPNode* searchForNode (int value);
+  GPNode* NthNode (int n) {
+    return (GPNode*) GPContainer::Nth (n); }
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+Function <EM>searchForNode()</EM> scans through a node set and tries to
+find a node with the given identification value.  It returns the address
+of the node.  If no node is found, NULL is returned.  <EM>NthNode()</EM>
+returns the node with index n of the container.
+
+</P>
+<P>
+<A NAME="IDX38"></A>
+<A NAME="IDX39"></A>
+<A NAME="IDX40"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual GPNode&#38; chooseFunction();
+  virtual GPNode&#38; chooseTerminal();
+  virtual GPNode* chooseNodeWithArgs (int args);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The first two functions are used during the creation process and choose
+either a function or a terminal from the node set.  They do this by
+random and are virtual functions in case the user wants to, for example,
+impose restrictions on the selection.  To perform swap mutation, the
+mutation function exchanges a node with another node from the node set
+but with the same number of arguments.  <EM>chooseNodeWithArgs()</EM>
+scans through the node set, counts the nodes with the appropriate number
+of arguments and selects one of them by random.  If none is found,
+<EM>chooseNodeWithArgs()</EM> returns NULL.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+protected:
+  int numFunctions, numTerminals;
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+These variables are used to distinguish between functions and terminals
+within the container.  The container contains functions from index
+<CODE>[</CODE>0...<EM>numFunctions</EM><CODE>]</CODE> and terminals from index
+<CODE>[</CODE><EM>containerSize()</EM><CODE>-</CODE><EM>numTerminals</EM>...<EM>containerSize()</EM><CODE>]</CODE>
+(last index exclusive).
+
+</P>
+
+
+
+<H3><A NAME="SEC10" HREF="gpkernel_toc.html#TOC10">1.4.3  Container for Node Sets</A></H3>
+
+<P>
+<A NAME="IDX41"></A>
+<A NAME="IDX42"></A>
+<A NAME="IDX43"></A>
+
+</P>
+<P>
+A genetic program consists of the main tree and the ADF trees.  Each
+tree type can have different function and terminal sets.  This allows
+the user to introduce a priori knowledge of the task to be performed by
+the genetic program.  To ensure easy handling and to prevent mistakes in
+accessing the sets, the container class <EM>GPAdfNodeSet</EM> is used to
+collect the node sets together rather than using an array which is not
+foolproof.  The container size of such an object determines the number
+of ADFs the user wants to use.
+
+</P>
+<P>
+<A NAME="IDX44"></A>
+<A NAME="IDX45"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+class GPAdfNodeSet : public GPContainer
+{
+public:
+  GPAdfNodeSet () {}
+  GPAdfNodeSet (int numOfTrees) : GPContainer(numOfTrees) {}
+  virtual void printOn (ostream&#38; os);
+  GPNodeSet* NthNodeSet (int n) { 
+    return (GPNodeSet*) GPContainer::Nth (n); }
+  ...
+};
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The class declaration is very short as it differs only slightly from an
+ordinary container class.  Remember that if the parameterless
+constructor is used the container size can be set later with the
+function <EM>reserveSpace()</EM>.  The function <EM>printOn()</EM> prints
+the number of the tree and the corresponding node set for each tree.
+<EM>NthNodeSet(n)</EM> returns a reference to the node set with index
+<EM>n</EM>.
+
+</P>
+
+
+
+<H3><A NAME="SEC11" HREF="gpkernel_toc.html#TOC11">1.4.4  How to Use the Classes</A></H3>
+
+<P>
+Before a population can be created, the functions and terminals have to
+be defined.  This is very easy using the classes <EM>GPNode</EM>,
+<EM>GPNodeSet</EM>, and <EM>GPAdfNodeSet</EM>.  First the container for all
+node sets must be declared.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  GPAdfNodeSet adfNs;
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+Then space is reserved for the node sets (in this example one for the
+main tree and one ADF tree).  This code determines the number of ADF
+trees the genetic programs have, because the creation process uses all
+node sets in this container, and creates the same number of trees.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  adfNs.reserveSpace (2);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+Now the node sets for each tree are allocated and put into the container
+of the <EM>adfNs</EM> object.  Each node set constructor is passed the
+correct number of nodes the container will hold:
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  GPNodeSet&#38; mainTree=*new GPNodeSet (6);
+  GPNodeSet&#38; adf0Tree=*new GPNodeSet (4);
+  adfNs.put (0, mainTree);
+  adfNs.put (1, adf0Tree);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The last step is to define the functions and terminals and put them into
+the node sets.  The identification values for the nodes are of type
+<EM>integer</EM>, but can be characters which are more descriptive.  This
+example is taken from the symbolic regression program and defines the
+following nodes:
+
+</P>
+<DL COMPACT>
+
+<DT><VAR>Main tree</VAR>
+<DD>
+<DL COMPACT>
+
+<DT><VAR>Functions</VAR>
+<DD>
+<CODE>+,-,*,/,ADF0(x1,x2)</CODE>
+<DT><VAR>Terminals</VAR>
+<DD>
+<CODE>x</CODE>
+</DL>
+<DT><VAR>ADF tree</VAR>
+<DD>
+<DL COMPACT>
+
+<DT><VAR>Functions</VAR>
+<DD>
+<CODE>+,-</CODE>
+<DT><VAR>Terminals</VAR>
+<DD>
+<CODE>x1,x2</CODE>
+</DL>
+</DL>
+
+
+<BLOCKQUOTE>
+
+<PRE>
+  mainTree.putNode (*new GPNode ('+', "+", 2));
+  mainTree.putNode (*new GPNode ('-', "-", 2));
+  mainTree.putNode (*new GPNode ('*', "*", 2));
+  mainTree.putNode (*new GPNode ('%', "%", 2));
+  mainTree.putNode (*new GPNode ('A', "ADF0", 2));
+  mainTree.putNode (*new GPNode ('X', "x"));
+  adf0Tree.putNode (*new GPNode ('+', "+", 2));
+  adf0Tree.putNode (*new GPNode ('*', "*", 2));
+  adf0Tree.putNode (*new GPNode (1, "x1"));
+  adf0Tree.putNode (*new GPNode (2, "x2"));
+</PRE>
+
+</BLOCKQUOTE>
+
+
+
+<H2><A NAME="SEC12" HREF="gpkernel_toc.html#TOC12">1.5  The Population</A></H2>
+
+<P>
+<A NAME="IDX46"></A>
+<A NAME="IDX47"></A>
+<A NAME="IDX48"></A>
+
+</P>
+<P>
+A <EM>GPPopulation</EM> object is a container that contains all the
+genetic programs of a population.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+class GPPopulation : public GPContainer
+{
+public:
+  GPPopulation (GPVariables&#38; GPVar_, GPAdfNodeSet&#38; adfNs_) : 
+    adfNs(&#38;adfNs_), GPVar(GPVar_) {}
+  ...
+};
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The above constructor is usually used to create a new population.  That
+does not mean that the genetic programs are created at this point, not
+even the container space is reserved.  This is done later when a new
+generation is created.  The class needs some configuration variables (a
+<EM>GPVariables</EM> object, See section <A HREF="gpkernel_1.html#SEC15">1.8  Configuration Variables</A>) which are
+used throughout the member functions of the class, and a container with
+the node sets for each genetic tree.  The node sets are saved in the
+population object as a reference; that means that the node set objects
+must not be destroyed as long as the population exists.
+
+</P>
+<P>
+<A NAME="IDX49"></A>
+<A NAME="IDX50"></A>
+<A NAME="IDX51"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual void create ();
+  virtual GP* createGP (int numOfTrees) { return new GP (numOfTrees); }
+  virtual int checkForValidCreation (GP&#38; gpo);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The function <EM>create()</EM> reserves space for the genetic programs in
+the object's container.  Then it loops through the whole population.  It
+creates genetic programs which are still empty by calling the function
+<EM>createGP()</EM>, then calls the function <EM>GP::create()</EM>
+(See section <A HREF="gpkernel_1.html#SEC13">1.6  The Genetic Program</A>) for each genetic program with the
+appropriate parameters to create the trees.
+
+</P>
+<P>
+Once a genetic program has been created, the function
+<EM>checkForValidCreation()</EM> is called to check for a valid genetic
+program.  This function can reject any genetic program.  This does not
+necessarily lead to an infinite loop.  After a certain amount of trials,
+the function <EM>create()</EM> accepts the last one even if
+<EM>checkForValidCreation()</EM> returns the value 0 (which means the
+genetic program is not valid).  In the current implementation, the
+function checks whether the genetic program was already created before,
+and rejects those genetic programs to ensure ultimate diversity.  A
+rejection is likely to happen when small tree depths, few different
+nodes and large populations are used.
+
+</P>
+<P>
+<A NAME="IDX52"></A>
+<A NAME="IDX53"></A>
+<A NAME="IDX54"></A>
+<A NAME="IDX55"></A>
+<A NAME="IDX56"></A>
+<A NAME="IDX57"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  double totalFitness ();
+  long totalLength ();
+  long totalDepth ();
+  GP* NthGP (int n) { return (GP*) GPContainer::Nth (n); }
+  virtual void printOn (ostream&#38; os);
+  virtual void createGenerationReport (int printLegend, int generation,
+                                       ostream&#38; fout, ostream&#38; bout);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The first three routines loop through the complete population and sum
+all the appropriate values of the genetic programs together.  They are
+used for statistical purposes.  The function <EM>NthGP()</EM> returns the
+n-th genetic program of the population.  The function <EM>printOn()</EM>
+prints all the genetic programs of the population, and
+<EM>createGenerationReport()</EM> reports some statistical parameters
+about the population.
+
+</P>
+<P>
+<A NAME="IDX58"></A>
+<A NAME="IDX59"></A>
+<A NAME="IDX60"></A>
+<A NAME="IDX61"></A>
+<A NAME="IDX62"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual void generate (GPPopulation&#38; newPop);
+  GPContainer* evolution (GPPopulationRange&#38; range);
+  virtual void demeticMigration ();
+  virtual void calculateStatistics ();
+  virtual void evaluate();
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The function <EM>generate()</EM> builds up a new population by applying
+the genetic operators creation, reproduction, selection, crossover and
+mutation.  The following actions are taken:
+
+</P>
+
+<OL>
+<LI>
+
+It divides the population into demes of equal size (the population must
+be divisible by the number of genes), if demes are used, and operates on
+each deme the same way it would on the whole population.
+<LI>
+
+For each deme, or the whole population, the function loops through it
+and
+
+<UL>
+<LI>
+
+creates objects for the new generation by calling the function
+<EM>evolution()</EM> which returns new members (usually one or two) in a
+container,
+<A NAME="IDX63"></A>
+<LI>
+
+mutates the genetic programs by calling <EM>GP::mutate()</EM>,
+<LI>
+
+places the new objects either in the new population, or, if steady state
+programming is used, in the old one by selecting bad performing genetic
+programs and overwriting them.  If steady state is used, the genetic
+program is evaluated at that point, because its fitness must be known
+for the selection of the next genetic programs.  However, if steady
+state is not used, the evaluation will be delayed until the whole
+population has been built.
+</UL>
+
+<A NAME="IDX64"></A>
+<LI>
+
+If steady state is not used, the population is evaluated by calling
+<EM>evaluate()</EM> which calls the function <EM>GP::evaluate()</EM> for
+each genetic program.
+<LI>
+
+After the new population has been built up, <EM>generate()</EM> calls the
+function <EM>demeticMigration()</EM>, if demes are used.
+<LI>
+
+<EM>calculateStatistics()</EM> is called to calculate some statistics
+about the population.
+</OL>
+
+<P>
+<A NAME="IDX65"></A>
+<A NAME="IDX66"></A>
+<A NAME="IDX67"></A>
+<A NAME="IDX68"></A>
+
+</P>
+<P>
+The function <EM>evolution()</EM> creates objects for the new generation.
+The configuration parameters <EM>CreationProbability</EM> and
+<EM>CrossoverProbability</EM> (See section <A HREF="gpkernel_1.html#SEC15">1.8  Configuration Variables</A>) determine
+whether a genetic programs is created anew, two parents are crossed or
+one is selected for reproduction.  One should be aware that for each
+crossover two children are created (Assuming the appropriate kernel
+functions are not overwritten).  A crossover probability of 50%
+(<EM>CreationProbability</EM>=0) therefore leads statistically to more
+than 50% members of the new population resulting from crossover.  The
+structure <EM>GPPopulationRange</EM> defines the range of the population
+that the selection process works on.  Also, a flag named
+<EM>firstSelectionPerDeme</EM> resides here and is used by the
+probabilistic selection function to set up variables that speed up
+further selections.
+
+</P>
+<P>
+<A NAME="IDX69"></A>
+
+</P>
+<P>
+If demes are used, the population is split into parts of equal size, and
+each deme is treated the same as the whole population would be treated
+without using demes.  Demetic migration means that for every deme of a
+population a genetic program is selected by using the usual selection
+scheme and exchanged with a similarly selected program from the next
+deme.  The probability of an exchange is determined by the configuration
+parameter <EM>DemeticMigProbability</EM>.
+
+</P>
+<P>
+<A NAME="IDX70"></A>
+<A NAME="IDX71"></A>
+<A NAME="IDX72"></A>
+<A NAME="IDX73"></A>
+<A NAME="IDX74"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual GPContainer* select (int numToSelect, 
+    GPPopulationRange&#38; range);
+  virtual GPContainer* selectParents (GPPopulationRange&#38; range);
+  virtual void selectIndices (int *selection, int numToSelect, 
+    int selectWorst, GPPopulationRange&#38; range);
+  virtual void tournamentSelection (int *selection, 
+    int numToSelect, int selectWorst, GPPopulationRange&#38; range);
+  virtual void probabilisticSelection (int *selection, 
+    int numToSelect, int selectWorst, GPPopulationRange&#38; range);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+  
+The selection of genetic programs is important for reproduction and
+crossover.  The function <EM>evolution()</EM> calls <EM>select()</EM> to
+select one genetic program for reproduction, and <EM>selectParents()</EM>
+to select two parents for crossover from a given range of the
+population.  The range is either the range of a deme, if demes are used,
+or of the whole population.
+  
+Both functions call <EM>selectIndices()</EM> to receive an array of
+indices (parameter <EM>selection</EM>) which refer to the selected genetic
+programs.  This function calls either <EM>tournamentSelection()</EM> or
+<EM>probabilisticSelection()</EM> depending on the selection type set in
+the configuration variables.  The functions can either return the best
+ones that were selected or the worst (used for steady state to replace
+the genetic programs with bad fitness by those with good fitness).  The
+number of genetic programs to select must be either one or two.
+
+</P>
+<P>
+The crossover process works only for two parents so far.  If other
+crossover mechanisms are to be used with more than two parents, not only
+the crossover function <EM>GP::cross()</EM> has to be changed, but also
+the functions that have to select the parents (<EM>selectParents()</EM>,
+<EM>tournamentSelection()</EM> and <EM>probabilisticSelection()</EM>).
+
+</P>
+<P>
+<A NAME="IDX75"></A>
+<A NAME="IDX76"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  int bestOfPopulation, worstOfPopulation;
+protected:
+  GPAdfNodeSet* adfNs;
+  GPVariables GPVar;
+  double avgFitness, avgLength, avgDepth;
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+<A NAME="IDX77"></A>
+
+</P>
+<P>
+<EM>bestOfPopulation</EM> and <EM>worstOfPopulation</EM> are indices to the
+best and worst member of a population.  The indices are valid only after
+<EM>calculateStatistics()</EM> has been called (done after the creation of
+the new generation and after a new generation has been evolved by
+<EM>generate()</EM>).  <EM>adfNs</EM> is a pointer to the node set
+container, and <EM>GPVar</EM> are the configuration variables for the
+population.  The other variables are used for statistical purposes.
+
+</P>
+
+
+
+<H2><A NAME="SEC13" HREF="gpkernel_toc.html#TOC13">1.6  The Genetic Program</A></H2>
+
+<P>
+<A NAME="IDX78"></A>
+<A NAME="IDX79"></A>
+<A NAME="IDX80"></A>
+
+</P>
+<P>
+A genetic program consists of a main tree and the ADF trees (if any).
+Class <EM>GP</EM> is inherited from <EM>GPContainer</EM> and contains the
+root gene of each tree.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+class GP : public GPContainer
+{
+public:
+  GP (int trees) : GPContainer (trees) { fitnessValid=0; 
+    GPlength=0; GPdepth=0; }
+  ...
+};
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+To create a genetic program, the constructor has to be called with the
+correct number of trees.
+
+</P>
+<P>
+<A NAME="IDX81"></A>
+<A NAME="IDX82"></A>
+<A NAME="IDX83"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual void create (enum GPCreationType ctype, int allowabledepth, 
+                       GPAdfNodeSet&#38; adfNs);
+  virtual GPGene* createGene (GPNode&#38; gpo) { return new GPGene (gpo); }
+  virtual int compare (GP&#38; gp);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The function <EM>create()</EM> creates a genetic program.  First, it
+creates the root genes of the trees and puts them into the container of
+the genetic program.  The root genes are always functions.  Then it
+creates the trees by calling the function <EM>create()</EM> for each root
+gene.  Normally each tree has a different node set.  They are extracted
+from the variable <EM>adfNs</EM> which is a container the same size as the
+genetic program.  A mismatch will result in an error (See section <A HREF="gpkernel_1.html#SEC22">1.10.1  Error Handling</A>).  The allowed creation types are either <EM>GPGrow</EM> or
+<EM>GPVariable</EM>, all other creation types influence only the allowable
+tree depth.
+
+</P>
+<P>
+<A NAME="IDX84"></A>
+
+</P>
+<P>
+If the user wants to establish his own gene class, he wants his own
+class objects created during the creation process.  The virtual function
+<EM>createGene()</EM> is used to create the root genes of the trees.  The
+user has to overwrite it to create his own objects.  The same has to be
+done for the class <EM>GPGene</EM>, where a similar function named
+<EM>createChild()</EM> is used to create the children of a gene.
+
+</P>
+<P>
+The function <EM>compare()</EM> is used to compare two genetic
+programs with each other and can be used to ensure diversity during
+the creation process.
+
+</P>
+<P>
+<A NAME="IDX85"></A>
+<A NAME="IDX86"></A>
+<A NAME="IDX87"></A>
+<A NAME="IDX88"></A>
+<A NAME="IDX89"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual GPContainer&#38; cross (GPContainer* parents, 
+                              int maxdepthforcrossover);
+  void shrinkMutation ();
+  void swapMutation (GPAdfNodeSet&#38; adfNs);
+  virtual void mutate (GPVariables&#38; GPVar, GPAdfNodeSet&#38; adfNs);
+  virtual void evaluate ();
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+<A NAME="IDX90"></A>
+
+</P>
+<P>
+Crossover is one of the most important genetic operations.  It crosses
+the parents belonging to a container defined as a parameter.  A
+container with children is returned.  If the user overwrites the
+function and allocates another container, the passed container must be
+deleted.  The number of parents is determined by the function
+<EM>generate()</EM> of class <EM>GPPopulation</EM> and must be two for this
+implementation to work.  The number of children can be any value
+(including zero! Note that if no child is returned every time the
+function <EM>cross()</EM> is called, an infinite loop will occur), but is
+in this implementation always two.  In crossover, a random number
+determines which trees of the parents are crossed, for example, the main
+trees, ADF0 trees etc.  From these trees, two cut points are chosen and
+the whole subtrees are swapped.  If the depth of one or both the
+resulting tree is larger than the configuration parameter
+<EM>MaximumDepthForCrossover</EM>, the subtrees are swapped back and
+another cut point is chosen.  A fixed maximum amount of trials will be
+carried out until the tree size of the children is acceptable.
+
+</P>
+<P>
+The function <EM>mutate()</EM> determines whether a mutation should take
+place, depending on the probability given in the appropriate parameters
+of the class <EM>GPVariables</EM> variable.  The mutation operation can be
+defined in several ways.  This implementation performs swap and shrink
+mutation.  Function <EM>swapMutation()</EM> exchanges a node by another
+node randomly chosen from the node set.  Only nodes with the same number
+of arguments are swapped.  Function <EM>shrinkMutation()</EM> chooses a
+function gene (e.g. a gene which has children), then one of its
+children.  The chosen child takes the place of the parent, and the
+parent and all other children are deleted.
+
+</P>
+<P>
+<A NAME="IDX91"></A>
+
+</P>
+<P>
+The selection of genetic programs is based upon assessing the genetic
+programs in some way.  This depends on the problem the user wants to
+solve.  The function <EM>evaluate()</EM> must therefore be written by the
+user.  It has to calculate the standardised fitness (See Koza's book) of
+the genetic program and put the result in the member variable
+<EM>stdFitness</EM>.  The standardised fitness is a positive value where
+smaller values denotes a better fitness.
+
+</P>
+<P>
+<A NAME="IDX92"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual void printOn (ostream&#38; os);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The print function prints out all trees the genetic program contains.
+
+</P>
+<P>
+<A NAME="IDX93"></A>
+<A NAME="IDX94"></A>
+<A NAME="IDX95"></A>
+<A NAME="IDX96"></A>
+<A NAME="IDX97"></A>
+<A NAME="IDX98"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  double getFitness () { return stdFitness; }
+  virtual int length () { return GPlength; }
+  virtual int depth () { return GPdepth; }
+  virtual void calcLength ();
+  virtual void calcDepth ();
+  GPGene* NthGene (int n) { return (GPGene*) GPContainer::Nth(n); }
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+These functions return information about the genetic program.  The
+length and depth of a genetic program is defined as the sum of the
+length and depth of all trees.  These values are needed more than once
+within the library.  To calculate them repeatedly leads to an impact on
+program efficiency as all the trees have to be parsed.  To save
+calculation time, the values are saved in the object.  That means that
+the functions <EM>calcLength()</EM> and <EM>calcDepth()</EM> have to be
+called whenever the length and depth of a genetic program might change
+(for example, for crossover, but not swap mutation).
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+protected:
+  int fitnessValid;
+  double stdFitness;
+  int GPlength, GPdepth;
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The variable <EM>stdFitness</EM> is the standardised fitness (positive
+numbers, and 0.0 is best) of the genetic program.  The fitness does not
+change when a program is reproduced.  To save computational power, a
+flag determines whether the fitness of the <EM>GP</EM> object is already
+calculated or not.  The flag must be set to 0 by any operation that
+changes the genetic program (for example, the crossover and mutation),
+but not by reproduction.  The length and depth of a genetic program are
+also saved.
+
+</P>
+
+
+
+<H2><A NAME="SEC14" HREF="gpkernel_toc.html#TOC14">1.7  The Gene</A></H2>
+
+<P>
+<A NAME="IDX99"></A>
+<A NAME="IDX100"></A>
+<A NAME="IDX101"></A>
+
+</P>
+<P>
+Genetic Programming uses tree structures to internally store genetic
+programs.  A tree consists of genes, each of which can be the parent
+gene for one or more children.  A gene is also a container, so the class
+<EM>GPContainer</EM> can be used again.  A gene object has only one
+component: a pointer to an object of class <EM>GPNode</EM>.  By
+referencing a node object rather than, for example, the node's
+identification value, several aspects have to be taken into account.
+The most important argument was that the user might use his own node
+class with components accessible in this way.  To store the complete
+node object into the gene is certainly not a bad solution, but is not
+used due to memory considerations.  The reference, on the other hand,
+makes problems when a population has to be saved and loaded again.  See
+section <A HREF="gpkernel_1.html#SEC16">1.9  Loading and Saving of Populations</A> how this is solved.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+class GPGene : public GPContainer
+{
+public:
+  GPGene (GPNode&#38; gpo) : node(&#38;gpo), GPContainer(gpo.arguments()) {}
+  ...
+};
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+To create and use a gene object, a node object has to exist.  The
+constructor is called with a reference to the node object, which is
+saved in the gene object.  At the same time, the constructor of the base
+class <EM>GPContainer</EM> is called with the number of arguments (or
+children) the gene requires.
+
+</P>
+<P>
+<A NAME="IDX102"></A>
+<A NAME="IDX103"></A>
+<A NAME="IDX104"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual void create (enum GPCreationType ctype, int allowabledepth, 
+                       GPNodeSet&#38; ns);
+  virtual GPGene* createChild (GPNode&#38; gpo) {
+    return new GPGene (gpo); }
+  friend int operator == (GPGene&#38; pg1, GPGene&#38; pg2);
+  virtual int compare (GPGene&#38; g);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The function <EM>create()</EM> is used to create a complete subtree.  It
+must be called either with <EM>GPGrow</EM> or <EM>GPVariable</EM> as
+creation type.  The other creation types that exist (see
+section <A HREF="gpkernel_1.html#SEC15">1.8  Configuration Variables</A> for more on the possible creation types)
+influence only the maximum allowable depth for creation.  The function
+creates the children for the object it was called for and calls itself
+recursively for each child which is not a terminal, reducing the
+allowable depth by 1.  To build a complete tree, the root tree node must
+be created, and then this function can be called for that object.  The
+function <EM>GP::create()</EM> does exactly this.
+
+</P>
+<P>
+If the user wants to establish his own gene class, he wants his own
+class objects created during the creation process.  Instead of the
+constructor, the class <EM>GPGene</EM> uses the function
+<EM>createChild()</EM>, a virtual function, for the creation process.  The
+user can overwrite the function and create any object that belongs to a
+class inherited from <EM>GPGene</EM>.  A similar function in class
+<EM>GP</EM> must also be overwritten.
+
+</P>
+<P>
+The compare function compares two trees with each other.  It is used
+during creation to ensure that the created genetic programs are unique.
+
+</P>
+<P>
+<A NAME="IDX105"></A>
+<A NAME="IDX106"></A>
+<A NAME="IDX107"></A>
+<A NAME="IDX108"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  GPGene** findNthNode (GPGene** rootPtr, int findFunction,
+                        int &#38;iLengthCount);
+  virtual GPGene** choose (GPGene** rootPtr);
+  int countFunctions ();
+  GPGene** chooseFunctionNode (GPGene** rootPtr);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+These functions are used for crossover and shrink mutation where a gene
+has to be selected on each parent tree by random.  This is done by
+function <EM>findNthNode()</EM>.  It must be called with (a) a reference
+to the pointer to the root gene, (b) a flag indicating whether just
+functions or both functions and terminals are to be selected, and (c) a
+reference to a variable containing a (random) number between 0 and one
+less than the number of selectable genes in the tree.  The function
+parses the tree thereby decrementing the length counter, and returns a
+reference to the pointer to the found gene.  The reason why references
+to pointers are used is very simple: the crossover operation only has to
+swap the pointers to perform the crossover.  Shrink mutation is also
+faster.
+
+</P>
+<P>
+The function <EM>choose()</EM> is used for crossover.  It selects a point
+within a genetic tree and returns a reference to a pointer to that node.
+It uses the function <EM>length()</EM> to calculate the length of the tree
+before choosing a random number in the correct range and calling
+<EM>findNthNode()</EM>.
+
+</P>
+<P>
+The function <EM>chooseFunctionNode()</EM> is used for shrink mutation.
+It selects a function gene within a genetic tree and returns a reference
+to a pointer to that node.  It uses the function <EM>countFunctions()</EM>
+to calculate the number of function of the tree before choosing a random
+number in the correct range and calling <EM>findNthNode()</EM>.  If no
+function nodes exists, NULL is returned.
+
+</P>
+<P>
+<A NAME="IDX109"></A>
+<A NAME="IDX110"></A>
+<A NAME="IDX111"></A>
+<A NAME="IDX112"></A>
+<A NAME="IDX113"></A>
+<A NAME="IDX114"></A>
+<A NAME="IDX115"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  virtual void printOn (ostream&#38; os);
+  GPGene* NthChild (int n) {
+    return (GPGene*) GPContainer::Nth (n); }
+  GPNode&#38; geneNode () { return *node; }
+  virtual int isFunction () { return node-&#62;isFunction (); }
+  virtual int isTerminal () { return node-&#62;isTerminal (); }
+  virtual int length ();
+  virtual int depth (int depthSoFar=1);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+These functions return information about the gene or a genetic tree.
+<EM>printOn()</EM> prints a tree in the typical lisp notation: if the gene
+is a function, it prints an open parenthesis, the node, all children and
+a close parenthesis, otherwise only the node.  Printing the node means
+that the function <EM>GPNode::printOn()</EM> of the node is called.
+
+</P>
+<P>
+The function <EM>depth()</EM> should be called without a parameter.  It is
+recursive and uses its parameter to calculate the depth of the tree.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+protected:
+  union
+  {
+    GPNode* node;
+    int nodeValue;
+  };
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+As described above, using a reference to a <EM>GPNode</EM> object
+complicates the process of loading and saving a population.  It is
+solved this way: only the identification value of the node is saved.
+That means that if a gene is loaded again from a stream, it gets only
+this value back and, to save memory, stores it temporarily at the same
+location where the pointer resides.  Another function described later
+has to be called after the load process to convert the identification
+value back to a reference.
+
+</P>
+
+
+
+<H2><A NAME="SEC15" HREF="gpkernel_toc.html#TOC15">1.8  Configuration Variables</A></H2>
+
+<P>
+<A NAME="IDX116"></A>
+<A NAME="IDX117"></A>
+<A NAME="IDX118"></A>
+
+</P>
+<P>
+This class is used to control the behaviour of several aspects of
+Genetic Programming.  Each population object has an object of this class
+as a member.  In this section, the meaning of all variables will be
+discussed.
+
+</P>
+<DL COMPACT>
+
+  
+<DT><STRONG>PopulationSize (integer, <CODE>[1..MaxInt]</CODE>)</STRONG>
+<DD>
+<A NAME="IDX119"></A>
+ 
+
+The number of members in a population.  The kernel uses this parameter
+during the creation of a population, where the appropriate space for the
+genetic programs is reserved.
+  
+<A NAME="IDX120"></A>
+<DT><STRONG>NumberOfGenerations (integer, <CODE>[0..MaxInt]</CODE>)</STRONG>
+<DD>
+The maximum number of generations for which the evolution process should
+run.  This variable is not used by the Genetic Programming system.  The
+user programs the main loop and can use other criteria to halt the
+evolution process (for example, convergence to a solution, time etc.),
+but it is quite common to restrict the number of generations.
+  
+<A NAME="IDX121"></A>
+<DT><STRONG>CrossoverProbability (double, <CODE>[0.0..100.0]</CODE>)</STRONG>
+<DD>
+The probability (in percent) that crossover takes place.  The crossover
+function returns usually two children, but may return also more or less.
+That means that the percentage of new population members resulting from
+crossover does not conform with the probability of crossover.
+  
+<A NAME="IDX122"></A>
+<DT><STRONG>CreationProbability (double, <CODE>[0.0..100.0]</CODE>)</STRONG>
+<DD>
+The probability (in percent) that completely new trees are created for
+the new generation.  The creation type used is <EM>GPVariable</EM>.  As
+the fitness of a newly created tree tends to be bad, this parameter can
+be set to 0.
+  
+<A NAME="IDX123"></A>
+<DT><STRONG>CreationType (integer, <CODE>[0..5]</CODE>)</STRONG>
+<DD>
+The creation type for the initial population.  The values have the
+following meaning:
+
+<A NAME="IDX124"></A>
+<A NAME="IDX125"></A>
+<A NAME="IDX126"></A>
+<A NAME="IDX127"></A>
+<A NAME="IDX128"></A>
+<A NAME="IDX129"></A>
+<A NAME="IDX130"></A>
+<A NAME="IDX131"></A>
+<A NAME="IDX132"></A>
+<A NAME="IDX133"></A>
+<A NAME="IDX134"></A>
+<A NAME="IDX135"></A>
+
+
+<UL>
+  
+<LI>[0] <EM>GPVariable</EM>
+
+Variable growth.  During creation, the children of a function node are
+chosen from either the function set or the terminal set with a certain
+probability (in this case always 50%).
+  
+<LI>[1] <EM>GPGrow</EM>
+
+All branches have a maximum depth.
+    
+<LI>[2] <EM>GPRampedHalf</EM>
+
+Koza uses this creation method.  It is half and half of
+<EM>GPRampedVariable</EM> and <EM>GPRampedGrow</EM>.
+    
+<LI>[3] <EM>GPRampedVariable</EM>
+
+Ramped means that during creation, the allowable tree depth is increased
+up to the maximum specified by the user.  The behaviour is the same as
+<EM>GPVariable</EM> otherwise.
+    
+<LI>[4] <EM>GPRampedGrow</EM>
+
+Same as <EM>GPGrow</EM> except for the maximum allowable tree depth which
+changes according to a ramp during creation.
+    
+<LI>[5] <EM>GPUserDefinedCreation</EM>
+
+This is not implemented, but the user can do this in one of his
+inherited classes.
+
+</UL>
+
+<A NAME="IDX136"></A>
+<DT><STRONG>MaximumDepthForCreation (integer, <CODE>[2..MaxInt]</CODE>)</STRONG>
+<DD>
+The maximum depth that must not be exceeded during the creation of a
+genetic tree.  The Genetic Programming kernel always uses a function as
+the root node of a tree during creation, as does Koza.  Therefore, a
+depth smaller then 2 makes no sense.  Depending on the creation type, a
+high depth size can lead to extremely large trees and long creation
+times and consumes a lot of memory.
+  
+<A NAME="IDX137"></A>
+<DT><STRONG>MaximumDepthForCrossover (integer, <CODE>[MaximumDepthForCreation..MaxInt]</CODE>)</STRONG>
+<DD>
+The maximum tree depth is most easily exceeded by crossing two trees.
+Therefore, the crossover operation selects two cut points on the
+selected trees so that the tree depth of each child is less than or
+equal to this parameter.
+  
+<A NAME="IDX138"></A>
+<DT><STRONG>SelectionType (integer, <CODE>[0..1]</CODE>)</STRONG>
+<DD>
+Can be probabilistic selection (value 0) or tournament selection (value
+1).  Remember that for large populations tournament selection usually
+works faster, but the implementation of probabilistic selection is also
+very fast, and both methods are difficult to compare with respect to
+computational power.
+  
+<A NAME="IDX139"></A>
+<DT><STRONG>TournamentSize (integer, <CODE>[1..MaxInt]</CODE>)</STRONG>
+<DD>
+When tournament selection is used, a number of members are chosen by
+random from of the population.  Only the best of this tournament are
+selected for further evolution strategies.  If this parameter is too
+large the probability that always the best one of a population is
+selected is very high.
+  
+<A NAME="IDX140"></A>
+<DT><STRONG>DemeticGrouping (integer, <CODE>[0..1]</CODE>)</STRONG>
+<DD>
+This is a switch and indicates whether demetic grouping should be used
+(value 1) or not (value 0).
+  
+<A NAME="IDX141"></A>
+<DT><STRONG>DemeSize (integer, <CODE>[1..PopulationSize]</CODE>)</STRONG>
+<DD>
+Determines the size of the demes.  <EM>PopulationSize</EM> modulo
+<EM>DemeSize</EM> must be zero.
+  
+<A NAME="IDX142"></A>
+<DT><STRONG>DemeticMigProbability (double, <CODE>[0.0..100.0]</CODE>)</STRONG>
+<DD>
+The probability (in percent) that a member of one deme is swapped with a
+member of the next deme.  There is always only one member swapped.
+Demetic migration takes place after a new generation has been created.
+The members being swapped are chosen using the same selection scheme
+used for crossover and reproduction.
+  
+<A NAME="IDX143"></A>
+<DT><STRONG>SwapMutationProbability (double, <CODE>[0.0..100.0]</CODE>)</STRONG>
+<DD>
+The probability (in percent) that swap mutation takes place.  Whenever a
+genetic program is evolved (by creation, reproduction or crossover) and
+is going to be put into the new generation, this parameter determines
+the probability that that member should be mutated.
+  
+<A NAME="IDX144"></A>
+<DT><STRONG>ShrinkMutationProbability (double, <CODE>[0.0..100.0]</CODE>)</STRONG>
+<DD>
+The probability (in percent) that shrink mutation takes place, otherwise
+similar to <EM>SwapMutationProbability</EM>.
+  
+<A NAME="IDX145"></A>
+<DT><STRONG>AddBestToNewPopulation (integer, <CODE>[0..1]</CODE>)</STRONG>
+<DD>
+If this flag is set and steady state Genetic Programming is not used,
+the best performing genetic program from the old population will be
+moved unchanged to the new one.
+  
+<A NAME="IDX146"></A>
+<DT><STRONG>SteadyState (integer, <CODE>[0..1]</CODE>)</STRONG>
+<DD>
+If this flag is set, then steady state Genetic Programming is used,
+which means that during the invocation of function
+<EM>GPPopulation::generate()</EM> no new generation is built up, but the
+old one is gradually replaced by the new one.  The advantage is that
+memory is needed only for one population instead of two.  This parameter
+also influences the main loop which resides in the user's code.  If
+steady state is not used, the old generation must be deleted and the new
+generation must replace the old one.
+
+</DL>
+
+
+
+<H2><A NAME="SEC16" HREF="gpkernel_toc.html#TOC16">1.9  Loading and Saving of Populations</A></H2>
+
+<P>
+<A NAME="IDX147"></A>
+
+</P>
+<P>
+To save or to load an object seems to be quite simple: one has only to
+write all member variables to the stream in a way that they can be read
+later by the complementary load function.  Problems arise when a class
+that owns objects, class <EM>GPContainer</EM>, has to do the same for all
+the objects it owns.  To save objects is easy: just a virtual function
+has to be provided.  But to load them implies that they are created
+first.
+
+</P>
+
+
+
+<H3><A NAME="SEC17" HREF="gpkernel_toc.html#TOC17">1.9.1  Registration</A></H3>
+
+<P>
+<A NAME="IDX148"></A>
+
+</P>
+<P>
+<A NAME="IDX149"></A>
+<A NAME="IDX150"></A>
+<A NAME="IDX151"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+GPObject* GPCreateRegisteredClassObject (int ID);
+void GPRegisterClass (GPObject* gpo);
+void GPRegisterKernelClasses ();
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+What is often done in such a case is to implement a registration
+mechanism for all classes that want to participate in the load and save
+operation.  Each class gets a unique identification value that can be
+obtained by a virtual function every class has to define.  Before
+members of a certain class can be loaded, they must be registered,
+e.g. an object of the class must be created and function
+<EM>GPRegisterClass()</EM> must be called.
+
+</P>
+<P>
+<A NAME="IDX152"></A>
+
+</P>
+<P>
+The trick is that class <EM>GPContainer</EM> saves not only the objects it
+contains, but also their identification value.  If they are to be loaded
+again, function <EM>GPCreateRegisteredClassObject()</EM> is called which
+creates a new object of the given identification value.  For that, it
+loops through all the objects that are registered until it finds one
+that matches the identification value, and calls a virtual function,
+<EM>createObject()</EM>, for that object to create a new object of the
+same class.
+
+</P>
+<P>
+During the initialisation process, the kernel calls
+<EM>GPRegisterKernelClasses()</EM> to register all kernel classes.
+
+</P>
+
+
+
+<H3><A NAME="SEC18" HREF="gpkernel_toc.html#TOC18">1.9.2  Requirements</A></H3>
+
+<P>
+We consider a new class that inherits from <EM>GPObject</EM>:
+
+</P>
+<P>
+<A NAME="IDX153"></A>
+<A NAME="IDX154"></A>
+<A NAME="IDX155"></A>
+<A NAME="IDX156"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+const int UserClassID=GPUserID;
+class UserClass : public GPObject
+{
+  ...
+  virtual char* load (istream&#38; is);
+  virtual void save (ostream&#38; os);
+  virtual int isA () { return UserClassID; }
+  virtual GPObject* createObject() { return new UserClass; }
+  ...
+}
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+Every class has to define those four virtual functions.  <EM>load()</EM>
+tries to load objects from a stream, and returns NULL or an error
+message, if something went wrong.  <EM>save()</EM> simply saves the object
+to the stream.
+
+</P>
+<P>
+<A NAME="IDX157"></A>
+
+</P>
+<P>
+<EM>isA()</EM> returns the identification value of the class.  If the user
+inherits from any kernel class, he has to use different identification
+values.  All values greater or equal than <EM>GPUserID</EM> can be used
+for that purpose.
+
+</P>
+<P>
+<EM>createObject()</EM> allocates a new object of the same class by
+calling a parameterless constructor.  Every class should therefore
+define such a constructor.
+
+</P>
+
+
+
+<H3><A NAME="SEC19" HREF="gpkernel_toc.html#TOC19">1.9.3  Loading and Saving of Gene and Population Objects</A></H3>
+
+<P>
+As mentioned before, the gene class saves not the pointer to its node
+information object, but the node identification value.  This value is
+read in from the stream during the load operation and must afterwards be
+converted again to a pointer to the node.  This is done by the following
+functions.
+
+</P>
+<P>
+Similarly, a population object has a pointer to its node set.  When a
+population is saved, this node set is not saved.  This object component
+is therefore not initialised when a population is loaded again, and has
+to be set manually.
+
+</P>
+<P>
+<A NAME="IDX158"></A>
+<A NAME="IDX159"></A>
+<A NAME="IDX160"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+class GPGene : public GPContainer
+{
+  ...
+  void resolveNodeValues (GPNodeSet&#38; ns);
+  ...
+}
+
+class GP : public GPContainer
+{
+  ...
+  void resolveNodeValues (GPAdfNodeSet&#38; adfNs);
+  ...
+}
+
+class GPPopulation : public GPContainer
+{
+  ...
+  void setNodeSets (GPAdfNodeSet&#38; adfNs_);
+  ...
+}
+</PRE>
+
+</BLOCKQUOTE>
+
+
+
+<H3><A NAME="SEC20" HREF="gpkernel_toc.html#TOC20">1.9.4  Example</A></H3>
+
+<P>
+Consider a complete population in pointer variable <EM>pop</EM> and the
+appropriate container of the node sets in pointer variable <EM>adfNn</EM>.
+To save the population and the node set, simply open a stream and call
+the function <EM>save()</EM> for each object.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  GPPopulation* pop;
+  GPAdfNodeSet* adfNs;
+  ...
+  ofstream savePop ("pop.dat");
+  adfNs-&#62;save (savePop);
+  pop-&#62;save (savePop);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+<A NAME="IDX161"></A>
+
+</P>
+<P>
+To reload that population, again open a stream, create an empty
+population and call <EM>load()</EM> for each the node set and the
+population.  Afterwards, call <EM>GPPopulation::setNodeSets()</EM> to
+resolve the pointers to the nodes.
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  ifstream loadPop ("pop.dat");
+  pop=new GPPopulation();
+  adfNs-&#62;load (loadPop);
+  pop-&#62;load (loadPop);
+  pop-&#62;setNodeSets (*adfNs);
+</PRE>
+
+</BLOCKQUOTE>
+
+
+
+<H2><A NAME="SEC21" HREF="gpkernel_toc.html#TOC21">1.10  Miscellaneous</A></H2>
+
+
+
+<H3><A NAME="SEC22" HREF="gpkernel_toc.html#TOC22">1.10.1  Error Handling</A></H3>
+
+<P>
+<A NAME="IDX162"></A>
+
+</P>
+<P>
+The Genetic Programming kernel makes a lot of run time checks.  Mostly,
+parameters of functions are checked to make the system safer and to
+detect errors in the early program development stage.  These checks can
+be suppressed by a compiler switch which then also speeds up execution
+time.
+
+</P>
+<P>
+<A NAME="IDX163"></A>
+<A NAME="IDX164"></A>
+<A NAME="IDX165"></A>
+<A NAME="IDX166"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+#define GPINTERNALCHECK 1
+#define GPCREATE_SEGMENTATIONFAULT_ON_ERROR 1
+void GPExitSystem (char *functionName, char *errorMessage); 
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+If an error is detected, the function <EM>GPExitSystem()</EM> is called
+which reports the name of the function where the error was detected and
+the error message itself, and then exits.  If a special compiler switch
+is on, the program tries to create a segmentation fault so that it is
+easier to track down the error with a debugger and find out which piece
+of code really caused the error.  This works only on computers and
+operating systems that are able to detect a segmentation fault.  It
+certainly does not work with MS-DOS!
+
+</P>
+
+
+
+<H3><A NAME="SEC23" HREF="gpkernel_toc.html#TOC23">1.10.2  Kernel Initialisation</A></H3>
+
+<P>
+<A NAME="IDX167"></A>
+<A NAME="IDX168"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+void GPInit (int printCopyright, long seedRandomGenerator);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+Before the Genetic Programming kernel is used, this function should be
+called once.  It prints out a copyright message, if flag
+<EM>printCopyright</EM> is true, initialises the random number generator
+with the value <EM>seedRandomGenerator</EM> and registers all kernel
+classes for the load and save operations.
+
+</P>
+<P>
+<A NAME="IDX169"></A>
+
+</P>
+<P>
+If <EM>seedRandomGenerator</EM> has the value <CODE>-1</CODE>, the random number
+generator is initialised with the return value from the system function
+<EM>time()</EM>, otherwise with the given value.  This can be very helpful
+in the debugging stage where errors must be reproduced: even though
+random numbers are used, the program behaviour stays the same.
+
+</P>
+
+
+
+<H3><A NAME="SEC24" HREF="gpkernel_toc.html#TOC24">1.10.3  Random Functions</A></H3>
+
+<P>
+<A NAME="IDX170"></A>
+
+</P>
+<P>
+The Genetic Programming kernel uses its own random number generator
+mostly due to the fact that the random number generators of many
+standard C libraries are usually of poor performance with respect to the
+random numbers that are generated.
+
+</P>
+<P>
+<A NAME="IDX171"></A>
+<A NAME="IDX172"></A>
+<A NAME="IDX173"></A>
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+void GPsrand (long);
+long GPrand ();
+int GPRandomPercent (double percent);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+<EM>GPsrand()</EM> initialises the random number generator.  This is
+normally done by <EM>GPInit()</EM>.  <EM>GPrand()</EM> returns a random
+number in the range <CODE>0..2^31-2</CODE>.  <EM>GPRandomPercent()</EM> returns
+0 or 1, depending on the probability of the parameter <EM>percent</EM>.
+The resolution for <EM>percent</EM> is <CODE>0.0001</CODE>.
+
+</P>
+
+
+
+<H3><A NAME="SEC25" HREF="gpkernel_toc.html#TOC25">1.10.4  Reading a Configuration File</A></H3>
+
+<P>
+<A NAME="IDX174"></A>
+<A NAME="IDX175"></A>
+
+</P>
+<P>
+<STRONG>Note:</STRONG> this module will probably be replaced one day by a more
+sophisticated one.
+
+</P>
+<P>
+<A NAME="IDX176"></A>
+
+</P>
+<P>
+The module <EM>Config</EM> defines a class called <EM>GPConfiguration</EM>
+and provides an easy and simple to use way to define configuration
+variables in a <EM>.ini</EM> file, which are read in by the constructor of
+this class.
+
+</P>
+<P>
+<A NAME="IDX177"></A>
+
+</P>
+<P>
+Simply call the constructor of the class with the stream to put any
+messages on (only for error messages, in case the file is malformed),
+the name of the file that should be read, and an array of structures
+<EM>GPConfigVarInformation</EM> describing the variables.  The array must
+end with a <EM>NULL</EM> pointer in the structure variable <EM>varPtr</EM>.
+The constructor reads the file and puts all the values of the variables
+he finds in the denoted memory location.
+
+</P>
+<P>
+The file format of a configuration file consists of the variable name,
+the character <SAMP>`='</SAMP> and the value which can be a string, an integer
+of a floating point value.  Comments are allowed and recognised by lines
+starting with the character <SAMP>`#'</SAMP>.
+
+</P>
+<P>
+Strings are duplicated; space is allocated with <CODE>new char[]</CODE> and
+should be freed, if no longer used.  In case any configuration variable
+is of type string, the structure variable <EM>varPtr</EM> points to a
+variable of type <EM>(char *)</EM>.  That's a better way than letting the
+user provide for the space, because it is not known how long the string
+will get.
+
+</P>
+<P>
+The structure that describes a configuration variable contains three
+components: the name of the configuration variable, the type which can
+be any of DATAINT, DATAFLOAT, DATADOUBLE or DATASTRING, and a pointer to
+that variable.  The structure must be global, because a pointer to the
+structure is saved in the class object to be used for the print routine
+as well, and the pointers to the variables must therefore exist as well.
+
+</P>
+<P>
+To use this module, include the file <EM>gpconfig.h</EM>.  The definitions
+are not put into the include file for the Genetic Programming system
+<EM>gp.h</EM>, because the user might want to define the configuration
+differently, and it is not a part of Genetic Programming.
+
+</P>
+<P>
+Example to define some configuration variables in the C source code:
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+int integerVar=10;
+double doubleVar=1.0;
+char *stringVar="default string";
+struct GPConfigVarInformation configArray[]=
+{
+  {"integerVar", DATAINT, &#38;integerVar},
+  {"doubleVar", DATADOUBLE, &#38;doubleVar},
+  {"stringVar", DATASTRING, &#38;stringVar},
+  {"", 0, NULL}
+};
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+To read the configuration from file <EM>main.ini</EM>, the following line
+has to be included in the source code:
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  GPConfiguration config (cout, "main.ini", configArray);
+</PRE>
+
+</BLOCKQUOTE>
+
+
+
+<H3><A NAME="SEC26" HREF="gpkernel_toc.html#TOC26">1.10.5  Restrictions</A></H3>
+
+<P>
+<A NAME="IDX178"></A>
+
+</P>
+<P>
+The Genetic Programming kernel was programmed according to the
+guideline: No restrictions whatsoever.  However, to do this is not
+always possible.
+
+</P>
+<P>
+The number of different node values as well as the maximum number of
+objects any container can have is restricted by the range of integer
+variables.  Generally, this is not a problem.
+
+</P>
+<P>
+The kernel is not multi-thread save, because a few functions use static
+or global variables (for example, the random number generator).
+
+</P>
+<P>
+The assignment operator is not yet implemented.  Assignments of class
+objects must not be made therefore.
+
+</P>
+<P>
+No other restrictions are known to the author.
+
+</P>
+<P>
+Though it was not tested, it should be possible to change the number of
+children of a gene.  This leads to the situation that the number of
+argument information in the <EM>GPNode</EM> object the gene refers to
+differs from the actual number of arguments.  The kernel always uses the
+function <EM>GPContainer::containerSize()</EM> when the number of
+arguments are needed, except when the gene is created.
+
+</P>
+<P>
+ 
+
+</P>
+
+
+<H2><A NAME="SEC27" HREF="gpkernel_toc.html#TOC27">1.11  Inheriting the Kernel Classes</A></H2>
+
+<P>
+<A NAME="IDX179"></A>
+
+</P>
+<P>
+If a problem is to be solved using the Genetic Programming kernel, three
+classes have to be inherited: <EM>GPGene</EM>, <EM>GP</EM> and
+<EM>GPPopulation</EM>.  For each class, a copy constructor and the
+function <EM>duplicate()</EM> have to be defined.  For example, the
+definitions for the new class named <EM>MyGene</EM> might look something
+like this:
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+class MyGene : public GPGene
+{
+  MyGene (const MyGene&#38; gpo) : GPGene (gpo) { }
+  virtual GPObject&#38; duplicate () { return *(new MyGene(*this)); }
+  ...
+};
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+Note that the initialisation list of the copy constructor contains a
+call to the copy constructor of the base class <EM>GPGene</EM>.
+
+</P>
+<P>
+During the creation process, the kernel functions use some virtual
+functions to create genes and genetic programs enabling the user to
+overwrite those functions and create objects that belong to the
+inherited classes.  The functions <EM>GPGene::createChild()</EM>,
+<EM>GP::createGene()</EM> and <EM>GPPopulation::createGP()</EM> have to be
+defined for that purpose.  Their task is to allocate an object of the
+class and return it.  The function parameter serves as the
+initialisation variable for the constructor which makes such a
+constructor definition mandatory as well.  For example, again for class
+<EM>MyGene</EM>, this can be done by the following code:
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  MyGene (GPNode&#38; gpo) : GPGene (gpo) {}
+  virtual GPGene* createGene (GPNode&#38; gpo) {
+    return new MyGene (gpo); }
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The most difficult part is, as usual when Genetic Programming is
+concerned, to define a fitness function for the genetic program.
+Function <EM>GP::evaluate()</EM> must be defined, and this function has to
+put the evaluated fitness in the class variable <EM>stdFitness</EM>.
+Another function, usually with the same name, will generally be defined
+in the class inherited from <EM>GPGene</EM> to parse the tree thus
+evaluating the fitness.
+
+</P>
+<P>
+These are the necessary definitions.  Usually, the function
+<EM>printOn()</EM> is also overwritten to redefine the way a gene, genetic
+program or whole population is printed to a stream.
+
+</P>
+<P>
+To be able to conveniently access a genetic program within a population,
+a tree within the genetic program or a child within the gene class,
+functions like <EM>MyGene::NthMyGene()</EM> can be defined that do the
+type conversion from type <EM>GPObject</EM> returned by
+<EM>GPContainer::Nth()</EM> to the type of the inherited class.
+
+</P>
+<P>
+To be able to load and save genetic programs or even whole populations,
+the functions <EM>isA()</EM>, <EM>load()</EM>, <EM>save()</EM> and
+<EM>createObject()</EM> and a parameterless constructor have to be defined
+(again for class <EM>MyGene</EM>):
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+const int MyGeneID=GPUserID;
+...
+  MyGene () {}
+  virtual int isA () { return MyGeneID; }
+  virtual GPObject* createObject() { return new MyGene; }
+  virtual char* load (istream&#38; is);
+  virtual void save (ostream&#38; os);
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+The complete skeleton for all three classes is in file
+<EM>skeleton/skeleton.cc</EM>.
+
+</P>
+
+<P><HR><P>
+Go to the first, previous, <A HREF="gpkernel_2.html">next</A>, <A HREF="gpkernel_3.html">last</A> section, <A HREF="gpkernel_toc.html">table of contents</A>.
+</BODY>
+</HTML>

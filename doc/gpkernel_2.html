@@ -1,0 +1,191 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.51
+     from gpkernel.texi on 3 July 1997 -->
+
+<TITLE>Genetic Programming Kernel Version 0.5.2 - 2  Parameter Study</TITLE>
+</HEAD>
+<BODY>
+Go to the <A HREF="gpkernel_1.html">first</A>, <A HREF="gpkernel_1.html">previous</A>, <A HREF="gpkernel_3.html">next</A>, <A HREF="gpkernel_3.html">last</A> section, <A HREF="gpkernel_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC28" HREF="gpkernel_toc.html#TOC28">2  Parameter Study</A></H1>
+
+
+
+<H2><A NAME="SEC29" HREF="gpkernel_toc.html#TOC29">2.1  Initial Configuration</A></H2>
+
+<P>
+To investigate the influence of some important configuration parameters
+of the Genetic Programming kernel, a problem which can be quickly
+calculated was selected: the lawn-mower problem (See Koza's book).
+
+</P>
+<P>
+The lawn-mower problem can be described as follows.  Consider an
+autonomous mower which must evolve the ability to mow the lawn it is
+placed upon.  The lawn in question is a ten times ten grid toriodal
+world.  Toriodal means that if the mower moves outside the lawn, it
+automatically comes in again on the opposite side.  The mower has no
+sensors.  It can move forward, turn left, and jump.
+
+</P>
+<P>
+Starting from a reasonably good configuration, some parameters were
+modified.  The starting configuration was:
+
+</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+PopulationSize                  = 100
+NumberOfGenerations             = (depends on parameter)
+CreationType                    = 2
+CreationProbability             = 2.0
+CrossoverProbability            = 98.0
+MaximumDepthForCreation         = 6
+MaximumDepthForCrossover        = 17
+SelectionType                   = 1
+TournamentSize                  = 10
+DemeticGrouping                 = 0
+DemeSize                        = 20
+DemeticMigProbability           = 100.0
+SwapMutationProbability         = 3.0
+ShrinkMutationProbability       = 3.0
+SteadyState                     = 0
+LengthFactor                    = 0.001
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>
+As many as 50 runs were made for each parameter value.  The average
+fitness values of the best performing genetic programs were recorded for
+each generation.
+
+</P>
+<P>
+This study was done to determine the influence of the Genetic
+Programming control parameters.  The conclusions that can be drawn from
+the study are, however, not generally applicable to all problems.
+
+</P>
+
+
+
+<H2><A NAME="SEC30" HREF="gpkernel_toc.html#TOC30">2.2  Results</A></H2>
+
+<IMG SRC="images/popsize.gif" ALT="Picture (Parameter study: population size)"
+ALIGN="CENTER"> <BR> Parameter study: population size </A> <P>
+
+<IMG SRC="images/popsize.gif" ALT="Picture (Parameter study: large population size versus large number of generations)"
+ALIGN="CENTER"> <BR> Parameter study: large population size versus large 
+number of generations </A> <P>
+
+<IMG SRC="images/steady.gif" ALT="Picture (Parameter study: steady state)"
+ALIGN="CENTER"> <BR> Parameter study: steady state </A> <P>
+
+<IMG SRC="images/maxdepth.gif" ALT="Picture (Parameter study: maximum depth for creation)"
+ALIGN="CENTER"> <BR> Parameter study: maximum depth for creation </A> <P>
+
+<IMG SRC="images/select.gif" ALT="Picture (Parameter study: selection method)"
+ALIGN="CENTER"> <BR> Parameter study: selection method </A> <P>
+
+<IMG SRC="images/crossove.gif" ALT="Picture (Parameter study: crossover probability)"
+ALIGN="CENTER"> <BR> Parameter study: crossover probability </A> <P>
+
+<IMG SRC="images/demgroup.gif" ALT="Picture (Parameter study: demetic grouping)"
+ALIGN="CENTER"> <BR> Parameter study: demetic grouping </A> <P>
+
+<IMG SRC="images/demesize.gif" ALT="Picture (Parameter study: deme size)"
+ALIGN="CENTER"> <BR> Parameter study: deme size.  Demetic grouping=1 </A> <P>
+
+<IMG SRC="images/dememig.gif" ALT="Picture (Parameter study: demetic migration probability)"
+ALIGN="CENTER"> <BR> Parameter study: demetic migration probability.  
+      Demetic grouping=1 </A> <P>
+
+<IMG SRC="images/swapmut.gif" ALT="Picture (Parameter study: swap mutation)"
+ALIGN="CENTER"> <BR> Parameter study: swap mutation </A> <P>
+
+<IMG SRC="images/shrnkmut.gif" ALT="Picture (Parameter study: shrink mutation)"
+ALIGN="CENTER"> <BR> Parameter study: shrink mutation </A> <P>
+
+<IMG SRC="images/toursize.gif" ALT="Picture (Parameter study: tournament size)"
+ALIGN="CENTER"> <BR> Parameter study: tournament size </A> <P>
+
+<IMG SRC="images/creation.gif" ALT="Picture (Parameter study: creation type)"
+ALIGN="CENTER"> <BR> Parameter study: creation type </A> <P>
+
+
+
+<H2><A NAME="SEC31" HREF="gpkernel_toc.html#TOC31">2.3  Conclusions</A></H2>
+
+<P>
+There are some conclusions that can be drawn from the parameter study:
+
+</P>
+
+<UL>
+
+<LI>
+
+In general: <STRONG>The faster the convergence in the first generations,
+the worse is the best achievable result, and vice versa.</STRONG>
+<LI>
+
+The population size should not fall below a certain minimum value.  This
+value depends on the problem.  When extremely good results are needed,
+nothing is better than a large population size.  A cross check was done
+to underline this.  A population size of 500 was run for 2000
+generations, but it did not yield an equally good result than the
+population size 5000 running for 200 generations (this particular run
+took 15 hours 35 minutes CPU time on an Ultra Sparc SUN workstation).
+By the way, the program consumed about 62MB memory with a population
+size of 5000.  Using steady state can reduce this to approximately half
+the amount, of course.
+<LI>
+
+If the steady state Genetic Programming is used, the results of the
+first generations are better.
+<LI>
+
+Tournament selection performs better, except when running a lot of
+generations.
+<LI>
+
+The higher the crossover probability, the faster the convergence.  The
+first conclusion does not appear to be applicable to this parameter.
+<LI>
+
+With the parameters from above, demetic grouping has no effect.  This
+changes with the deme size and the demetic migration probability,
+reduction of which slows down convergence.
+<LI>
+
+The effect of swap mutation is marginal.
+<LI>
+
+Shrink mutation can yield better results.  The reason for this is that
+the calculation of the standardised fitness takes the tree length into
+account, and shrink mutation therefore helps improving the fitness.
+<LI>The tournament size has a big effect.  The smaller it is, the
+
+better the best achievable result.
+<LI>
+
+The creation types <EM>Variable</EM> and <EM>RampedVariable</EM> should not
+be used.  The reason for their bad performance in the few first
+generations may be that during creation, the chance of selecting a
+function node or a terminal node is equal.  This can lead to short
+trees.
+<LI>
+
+The parameter <EM>MaximumDepthForCreation</EM> should not be too low.
+</UL>
+
+<P><HR><P>
+Go to the <A HREF="gpkernel_1.html">first</A>, <A HREF="gpkernel_1.html">previous</A>, <A HREF="gpkernel_3.html">next</A>, <A HREF="gpkernel_3.html">last</A> section, <A HREF="gpkernel_toc.html">table of contents</A>.
+</BODY>
+</HTML>

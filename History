@@ -1,0 +1,55 @@
+************************************************************************
+*               gpc++ - The Genetic Programming Kernel                 *
+*                         C++ Class Library                            *
+************************************************************************
+
+0.50  (15/1/97)
+---------------
+
+First version
+
+0.5.1 (28/1/97)
+---------------
+
+Shrink mutation faster
+
+Bug in GP::load(): Length and depth was not calculated
+
+config.h renamed to gpconfig.h
+
+Prefix GP added to all names of module config
+
+Bug in GPGene::chooseFunctionNode(): If no function node, floating
+point exception
+
+Bug in GP::mutate(): flag fitnessValid not set to 0
+
+Steady State feature added.  The following had to change because of
+this:
+
+- Arguments and return value of GPPopulation::tournamentSelection(),
+  GPPopulation::probabilisticSelection() changed.
+
+- New function GPPopulation::selectIndices().
+
+- New GPVariables parameter SteadyState.
+
+New GPVariables parameter AddBestToNewPopulation, CrossoverProbability
+and CreationProbability.  The Parameters ReproductionRation and
+CreationRatio are no longer valid.
+
+Selection mechanism for Demetic Migration is now one of the usual
+ones, not just random selection.  (Was possible because of the new
+function GPPopulation::selectIndices())
+
+0.5.2 (13/2/97)
+---------------
+
+Bug in GPPopulation::calculateStatistics(): The calculation of the
+worst of the population was wrong, and in some weird cases the best of
+the population was wrong, too.  This was not a severe bug, but can
+cause unnecessary trouble.
+
+Bug in GP::compare: Returned value 1 when the trees were the same.
+
+Documentation: Parameter study added.
